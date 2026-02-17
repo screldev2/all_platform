@@ -4,7 +4,7 @@ import 'dart:io';
 class AppConstants {
   // App General
   static const String appTitle = 'Google';
-  static const String homeUrl = 'https://www.google.com';
+  static const String homeUrl = 'https://www.isselo.com';
 
   // UI Styling
   static const Color primaryColor = Color(0xFF129247);
