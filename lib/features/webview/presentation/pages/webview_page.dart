@@ -1,18 +1,19 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import '../../features/webview/presentation/widgets/offline_screen.dart';
-import '../../features/webview/presentation/widgets/error_screen.dart';
-import '../../features/webview/presentation/widgets/loading_indicator.dart';
-import '../../features/webview/presentation/widgets/exit_confirmation_dialog.dart';
-import '../../core/constants/app_constants.dart';
-import '../../features/webview/domain/repositories/connectivity_repository.dart';
+import '../widgets/offline_screen.dart';
+import '../widgets/error_screen.dart';
+import '../widgets/loading_indicator.dart';
+import '../widgets/exit_confirmation_dialog.dart';
+import '../../../../core/constants/app_constants.dart';
+import '../../domain/repositories/connectivity_repository.dart';
 
-class Google extends StatelessWidget {
+class WebViewPage extends StatelessWidget {
   final ConnectivityRepository connectivityRepository;
-  const Google({super.key, required this.connectivityRepository});
+  const WebViewPage({super.key, required this.connectivityRepository});
 
   @override
   Widget build(BuildContext context) {
@@ -20,23 +21,23 @@ class Google extends StatelessWidget {
       canPop: false,
       child: Scaffold(
         backgroundColor: Colors.white,
-        body: SafeArea(child: _GoogleContent(connectivityRepository: connectivityRepository)),
+        body: SafeArea(child: _WebViewContent(connectivityRepository: connectivityRepository)),
       ),
     );
   }
 }
 
-class _GoogleContent extends StatefulWidget {
+class _WebViewContent extends StatefulWidget {
   final ConnectivityRepository connectivityRepository;
-  const _GoogleContent({required this.connectivityRepository});
+  const _WebViewContent({required this.connectivityRepository});
 
   @override
-  State<_GoogleContent> createState() => _GoogleContentState();
+  State<_WebViewContent> createState() => _WebViewContentState();
 }
 
-class _GoogleContentState extends State<_GoogleContent> with WidgetsBindingObserver {
+class _WebViewContentState extends State<_WebViewContent> with WidgetsBindingObserver {
   InAppWebViewController? _webViewController;
-  final InAppWebViewSettings _settings = InAppWebViewSettings(isInspectable: true, mediaPlaybackRequiresUserGesture: false, allowsInlineMediaPlayback: true, iframeAllowFullscreen: true, userAgent: AppConstants.userAgent);
+  final InAppWebViewSettings _settings = InAppWebViewSettings(isInspectable: true, mediaPlaybackRequiresUserGesture: false, allowsInlineMediaPlayback: true, iframeAllowFullscreen: true, userAgent: Platform.isWindows ? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" : null);
 
   bool _isConnected = true;
   bool _hasError = false;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_constants.dart';
 
 class LoadingIndicator extends StatelessWidget {
   final double progress;
@@ -18,19 +19,9 @@ class LoadingIndicator extends StatelessWidget {
         height: 3,
         decoration: BoxDecoration(
           color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 2,
-              offset: const Offset(0, 1),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 2, offset: const Offset(0, 1))],
         ),
-        child: LinearProgressIndicator(
-          value: progress > 0 ? progress / 100 : null,
-          backgroundColor: Colors.grey[200],
-          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF129247)),
-        ),
+        child: LinearProgressIndicator(value: progress > 0 ? progress / 100 : null, backgroundColor: Colors.grey[200], valueColor: const AlwaysStoppedAnimation<Color>(AppConstants.primaryColor)),
       ),
     );
   }

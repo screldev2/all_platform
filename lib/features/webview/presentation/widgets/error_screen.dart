@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_constants.dart';
 
 class ErrorScreen extends StatefulWidget {
   final String? errorMessage;
@@ -74,13 +75,13 @@ class _ErrorScreenState extends State<ErrorScreen> with SingleTickerProviderStat
                         Container(
                           width: 160,
                           height: 160,
-                          decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.red[50]?.withOpacity(0.3)),
+                          decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.red[50]?.withValues(alpha: 0.3)),
                         ),
                         // Middle decorative circle
                         Container(
                           width: 130,
                           height: 130,
-                          decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.red[50]?.withOpacity(0.5)),
+                          decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.red[50]?.withValues(alpha: 0.5)),
                         ),
                         // Inner circle with gradient
                         Container(
@@ -88,7 +89,7 @@ class _ErrorScreenState extends State<ErrorScreen> with SingleTickerProviderStat
                           height: 100,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: LinearGradient(colors: [Colors.red[400]!.withOpacity(0.2), Colors.red[300]!.withOpacity(0.1)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                            gradient: LinearGradient(colors: [Colors.red[400]!.withValues(alpha: 0.2), Colors.red[300]!.withValues(alpha: 0.1)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                           ),
                           child: Icon(Icons.error_outline_rounded, size: 60, color: Colors.red[400]),
                         ),
@@ -105,7 +106,7 @@ class _ErrorScreenState extends State<ErrorScreen> with SingleTickerProviderStat
                   child: FadeTransition(
                     opacity: _fadeAnimation,
                     child: Text(
-                      'Oops! Something Went Wrong',
+                      AppConstants.errorTitle,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: const Color(0xFF1a1a1a), letterSpacing: -0.5),
                       textAlign: TextAlign.center,
                     ),
@@ -127,7 +128,7 @@ class _ErrorScreenState extends State<ErrorScreen> with SingleTickerProviderStat
                         border: Border.all(color: Colors.grey[200]!, width: 1),
                       ),
                       child: Text(
-                        widget.errorMessage ?? 'We couldn\'t load the page. Please check your connection and try again.',
+                        widget.errorMessage ?? AppConstants.defaultErrorMessage,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700], height: 1.5),
                         textAlign: TextAlign.center,
                       ),
@@ -147,8 +148,8 @@ class _ErrorScreenState extends State<ErrorScreen> with SingleTickerProviderStat
                       height: 54,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
-                        gradient: const LinearGradient(colors: [Color(0xFF129247), Color(0xFF0d6d33)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                        boxShadow: [BoxShadow(color: const Color(0xFF129247).withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6))],
+                        gradient: const LinearGradient(colors: [AppConstants.primaryColor, AppConstants.primaryColorDark], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                        boxShadow: [BoxShadow(color: AppConstants.primaryColor.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 6))],
                       ),
                       child: ElevatedButton(
                         onPressed: widget.onRetry,
@@ -163,7 +164,7 @@ class _ErrorScreenState extends State<ErrorScreen> with SingleTickerProviderStat
                           children: [
                             Icon(Icons.refresh_rounded, size: 22),
                             const SizedBox(width: 8),
-                            const Text('Try Again', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                            const Text(AppConstants.retryButtonText, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                           ],
                         ),
                       ),
@@ -179,7 +180,7 @@ class _ErrorScreenState extends State<ErrorScreen> with SingleTickerProviderStat
                   child: FadeTransition(
                     opacity: _fadeAnimation,
                     child: Text(
-                      'Still having trouble? Check your internet connection',
+                      AppConstants.troubleshootingHelpText,
                       style: TextStyle(fontSize: 13, color: Colors.grey[500]),
                       textAlign: TextAlign.center,
                     ),

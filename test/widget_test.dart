@@ -8,23 +8,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:project_google/features/webview/domain/repositories/connectivity_repository.dart';
 import 'package:project_google/main.dart';
 
+class MockConnectivityRepository implements ConnectivityRepository {
+  @override
+  Future<bool> checkConnection() async => true;
+  @override
+  Stream<bool> get connectionStatus => Stream.fromIterable([true]);
+  @override
+  Future<void> initialize() async {}
+  @override
+  void dispose() {}
+}
+
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('App builds correctly', (WidgetTester tester) async {
+    final mockRepository = MockConnectivityRepository();
+    await tester.pumpWidget(MyApp(connectivityRepository: mockRepository));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify the app builds without crashing
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

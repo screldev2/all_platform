@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_constants.dart';
 
 class ExitConfirmationDialog {
   static Future<bool> show(BuildContext context) async {
@@ -25,23 +26,24 @@ class ExitConfirmationDialog {
                       width: 70,
                       height: 70,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(colors: [const Color(0xFF129247).withOpacity(0.1), const Color(0xFF129247).withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                        gradient: LinearGradient(colors: [AppConstants.primaryColor.withValues(alpha: 0.1), AppConstants.primaryColor.withValues(alpha: 0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.exit_to_app_rounded, size: 36, color: Color(0xFF129247)),
+                      child: const Icon(Icons.exit_to_app_rounded, size: 36, color: AppConstants.primaryColor),
                     ),
                     const SizedBox(height: 20),
 
                     // Title
                     const Text(
-                      'Exit App?',
+                      AppConstants.exitAppTitle,
                       style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1a1a1a), letterSpacing: -0.5),
                     ),
                     const SizedBox(height: 12),
 
                     // Description
                     Text(
-                      'Are you sure you want to exit the app?',
+                      AppConstants.exitAppMessage,
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 15, color: Colors.grey[600], height: 1.5),
                     ),
@@ -64,7 +66,7 @@ class ExitConfirmationDialog {
                                 foregroundColor: Colors.grey[700],
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
-                              child: const Text('Cancel', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                              child: const Text(AppConstants.cancelText, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                             ),
                           ),
                         ),
@@ -75,9 +77,9 @@ class ExitConfirmationDialog {
                           child: Container(
                             height: 50,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(colors: [Color(0xFF129247), Color(0xFF0d6d33)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                              gradient: const LinearGradient(colors: [AppConstants.primaryColor, AppConstants.primaryColorDark], begin: Alignment.topLeft, end: Alignment.bottomRight),
                               borderRadius: BorderRadius.circular(12),
-                              boxShadow: [BoxShadow(color: const Color(0xFF129247).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))],
+                              boxShadow: [BoxShadow(color: AppConstants.primaryColor.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))],
                             ),
                             child: ElevatedButton(
                               onPressed: () => exit(0),
@@ -87,7 +89,7 @@ class ExitConfirmationDialog {
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
-                              child: const Text('Exit', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              child: const Text(AppConstants.exitText, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                             ),
                           ),
                         ),

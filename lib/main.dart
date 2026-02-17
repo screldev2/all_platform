@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:project_google/presentation/pages/google.dart';
+import 'features/webview/data/datasources/connectivity_remote_data_source.dart';
+import 'features/webview/data/repositories/connectivity_repository_impl.dart';
+import 'features/webview/domain/repositories/connectivity_repository.dart';
+import 'features/webview/presentation/pages/webview_page.dart';
+import 'core/constants/app_constants.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  final connectivityDataSource = ConnectivityRemoteDataSource();
+  final connectivityRepository = ConnectivityRepositoryImpl(connectivityDataSource);
 
   // Performance optimizations
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
@@ -18,23 +25,24 @@ void main() {
     return true;
   }());
 
-  runApp(const MyApp());
+  runApp(MyApp(connectivityRepository: connectivityRepository));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final ConnectivityRepository connectivityRepository;
+  const MyApp({super.key, required this.connectivityRepository});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       scrollBehavior: const MaterialScrollBehavior().copyWith(scrollbars: false),
-      title: 'Google',
+      title: AppConstants.appTitle,
       theme: ThemeData(
-        primaryColor: const Color(0xFF129247),
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF129247), brightness: Brightness.light),
+        primaryColor: AppConstants.primaryColor,
+        colorScheme: ColorScheme.fromSeed(seedColor: AppConstants.primaryColor, brightness: Brightness.light),
       ),
-      home: const Google(),
+      home: WebViewPage(connectivityRepository: connectivityRepository),
     );
   }
 }

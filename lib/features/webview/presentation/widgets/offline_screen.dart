@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:project_google/services/connectivity_service.dart';
+import '../../../../core/constants/app_constants.dart';
+import '../../domain/repositories/connectivity_repository.dart';
 
 class OfflineScreen extends StatefulWidget {
   final VoidCallback? onRetry;
+  final ConnectivityRepository connectivityRepository;
 
-  const OfflineScreen({super.key, this.onRetry});
+  const OfflineScreen({super.key, this.onRetry, required this.connectivityRepository});
 
   @override
   State<OfflineScreen> createState() => _OfflineScreenState();
 }
 
 class _OfflineScreenState extends State<OfflineScreen> with TickerProviderStateMixin {
-  final ConnectivityService _connectivityService = ConnectivityService();
   bool _isRetrying = false;
 
   late AnimationController _pulseController;
@@ -41,7 +42,7 @@ class _OfflineScreenState extends State<OfflineScreen> with TickerProviderStateM
     _fadeController.forward();
 
     // Auto-retry when connectivity is restored
-    _connectivityService.connectionStatus.listen((isConnected) {
+    widget.connectivityRepository.connectionStatus.listen((isConnected) {
       if (isConnected && mounted) {
         widget.onRetry?.call();
       }
@@ -59,7 +60,8 @@ class _OfflineScreenState extends State<OfflineScreen> with TickerProviderStateM
   Future<void> _retryConnection() async {
     setState(() => _isRetrying = true);
     await Future.delayed(const Duration(seconds: 1));
-    final isConnected = await _connectivityService.checkConnection();
+    final isConnected = await widget.connectivityRepository.checkConnection();
+
     setState(() => _isRetrying = false);
 
     if (isConnected) {
@@ -103,7 +105,7 @@ class _OfflineScreenState extends State<OfflineScreen> with TickerProviderStateM
                                   height: 140 + (progress * 60),
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.grey[300]!.withOpacity(1 - progress), width: 2),
+                                    border: Border.all(color: Colors.grey[300]!.withValues(alpha: 1 - progress), width: 2),
                                   ),
                                 ),
                               );
@@ -123,7 +125,7 @@ class _OfflineScreenState extends State<OfflineScreen> with TickerProviderStateM
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   gradient: LinearGradient(colors: [Colors.grey[100]!, Colors.grey[50]!], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                                  boxShadow: [BoxShadow(color: Colors.grey[300]!.withOpacity(0.5), blurRadius: 20, offset: const Offset(0, 10))],
+                                  boxShadow: [BoxShadow(color: Colors.grey[300]!.withValues(alpha: 0.5), blurRadius: 20, offset: const Offset(0, 10))],
                                 ),
                                 child: Icon(Icons.wifi_off_rounded, size: 70, color: Colors.grey[400]),
                               ),
@@ -143,7 +145,7 @@ class _OfflineScreenState extends State<OfflineScreen> with TickerProviderStateM
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -2))],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -2))],
               ),
               child: SingleChildScrollView(
                 child: FadeTransition(
@@ -152,7 +154,7 @@ class _OfflineScreenState extends State<OfflineScreen> with TickerProviderStateM
                     children: [
                       // Title
                       Text(
-                        'No Internet Connection',
+                        AppConstants.noInternetTitle,
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: const Color(0xFF1a1a1a), letterSpacing: -0.5),
                         textAlign: TextAlign.center,
                       ),
@@ -177,7 +179,7 @@ class _OfflineScreenState extends State<OfflineScreen> with TickerProviderStateM
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: Text('Please check your internet connection and try again.', style: TextStyle(fontSize: 14, color: Colors.grey[700], height: 1.5)),
+                              child: Text(AppConstants.noInternetMessage, style: TextStyle(fontSize: 14, color: Colors.grey[700], height: 1.5)),
                             ),
                           ],
                         ),
@@ -190,7 +192,8 @@ class _OfflineScreenState extends State<OfflineScreen> with TickerProviderStateM
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.blue[50]?.withOpacity(0.3),
+                          color: Colors.blue[50]?.withValues(alpha: 0.3),
+
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.blue[100]!, width: 1),
                         ),
@@ -201,15 +204,13 @@ class _OfflineScreenState extends State<OfflineScreen> with TickerProviderStateM
                                 Icon(Icons.lightbulb_outline_rounded, color: Colors.blue[700], size: 20),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Troubleshooting Tips',
+                                  AppConstants.troubleshootingTitle,
                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blue[700]),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 12),
-                            _buildTip('Check WiFi or mobile data'),
-                            _buildTip('Try airplane mode on/off'),
-                            _buildTip('Restart your device'),
+                            ...AppConstants.troubleshootingTips.map((tip) => _buildTip(tip)),
                           ],
                         ),
                       ),
@@ -222,8 +223,8 @@ class _OfflineScreenState extends State<OfflineScreen> with TickerProviderStateM
                         height: 50,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          gradient: LinearGradient(colors: _isRetrying ? [Colors.grey[400]!, Colors.grey[500]!] : [const Color(0xFF129247), const Color(0xFF0d6d33)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                          boxShadow: [BoxShadow(color: (_isRetrying ? Colors.grey[400]! : const Color(0xFF129247)).withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6))],
+                          gradient: LinearGradient(colors: _isRetrying ? [Colors.grey[400]!, Colors.grey[500]!] : [AppConstants.primaryColor, AppConstants.primaryColorDark], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                          boxShadow: [BoxShadow(color: (_isRetrying ? Colors.grey[400]! : AppConstants.primaryColor).withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 6))],
                         ),
                         child: ElevatedButton(
                           onPressed: _isRetrying ? null : _retryConnection,
@@ -241,7 +242,7 @@ class _OfflineScreenState extends State<OfflineScreen> with TickerProviderStateM
                                   children: [
                                     const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, valueColor: AlwaysStoppedAnimation<Color>(Colors.white))),
                                     const SizedBox(width: 12),
-                                    Text('Checking...', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                                    Text(AppConstants.checkingText, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                                   ],
                                 )
                               : Row(
@@ -249,7 +250,7 @@ class _OfflineScreenState extends State<OfflineScreen> with TickerProviderStateM
                                   children: [
                                     const Icon(Icons.refresh_rounded, size: 22),
                                     const SizedBox(width: 8),
-                                    const Text('Try Again', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                                    const Text(AppConstants.retryButtonText, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                                   ],
                                 ),
                         ),
