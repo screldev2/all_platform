@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 
@@ -37,7 +36,7 @@ class _WebViewContent extends StatefulWidget {
 
 class _WebViewContentState extends State<_WebViewContent> with WidgetsBindingObserver {
   InAppWebViewController? _webViewController;
-  final InAppWebViewSettings _settings = InAppWebViewSettings(isInspectable: true, mediaPlaybackRequiresUserGesture: false, allowsInlineMediaPlayback: true, iframeAllowFullscreen: true, userAgent: Platform.isWindows ? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" : null);
+  final InAppWebViewSettings _settings = InAppWebViewSettings(isInspectable: true, mediaPlaybackRequiresUserGesture: false, allowsInlineMediaPlayback: true, iframeAllowFullscreen: true, userAgent: AppConstants.userAgent);
 
   bool _isConnected = true;
   bool _hasError = false;
