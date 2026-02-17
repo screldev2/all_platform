@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-import 'package:webview_flutter_android/webview_flutter_android.dart';
-import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+
 import 'package:project_google/services/connectivity_service.dart';
 import 'package:project_google/presentation/widgets/offline_screen.dart';
 import 'package:project_google/presentation/widgets/error_screen.dart';
@@ -33,17 +32,18 @@ class _GoogleContent extends StatefulWidget {
 }
 
 class _GoogleContentState extends State<_GoogleContent> with WidgetsBindingObserver {
-  late final WebViewController _controller;
+  InAppWebViewController? _webViewController;
+  InAppWebViewSettings _settings = InAppWebViewSettings(isInspectable: true, mediaPlaybackRequiresUserGesture: false, allowsInlineMediaPlayback: true, iframeAllowFullscreen: true, userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+
   final ConnectivityService _connectivityService = ConnectivityService();
 
   static const String _allowedDomain = 'google.com';
   static const String _homeUrl = 'https://www.google.com';
 
   bool _isConnected = true;
-  bool _isLoading = true;
   bool _hasError = false;
-  bool _controllerInitialized = false;
   int _loadingProgress = 0;
+
   String? _errorMessage;
   bool _canGoBack = false;
 
@@ -75,7 +75,6 @@ class _GoogleContentState extends State<_GoogleContent> with WidgetsBindingObser
   Future<void> _initializeApp() async {
     await _connectivityService.initialize();
     _setupConnectivityListener();
-    await _initializeWebView();
   }
 
   void _debouncedProgressUpdate(int progress) {
@@ -84,7 +83,6 @@ class _GoogleContentState extends State<_GoogleContent> with WidgetsBindingObser
       if (mounted) {
         setState(() {
           _loadingProgress = progress;
-          _isLoading = progress < 100;
         });
       }
     });
@@ -101,86 +99,23 @@ class _GoogleContentState extends State<_GoogleContent> with WidgetsBindingObser
     });
   }
 
-  Future<void> _initializeWebView() async {
-    late final PlatformWebViewControllerCreationParams params;
+  Future<NavigationActionPolicy> _handleNavigationDecision(InAppWebViewController controller, NavigationAction navigationAction) async {
+    final url = navigationAction.request.url;
+    if (url == null) return NavigationActionPolicy.CANCEL;
 
-    if (WebViewPlatform.instance is WebKitWebViewPlatform) {
-      params = WebKitWebViewControllerCreationParams(allowsInlineMediaPlayback: true, mediaTypesRequiringUserAction: const <PlaybackMediaTypes>{});
-    } else {
-      params = const PlatformWebViewControllerCreationParams();
-    }
-
-    final WebViewController controller = WebViewController.fromPlatformCreationParams(params);
-
-    await controller.setJavaScriptMode(JavaScriptMode.unrestricted);
-    await controller.setBackgroundColor(const Color(0x00000000));
-
-    await controller.setNavigationDelegate(
-      NavigationDelegate(
-        onProgress: _debouncedProgressUpdate,
-        onPageStarted: (String url) {
-          debugPrint('Page started loading: $url');
-          if (mounted) {
-            setState(() {
-              _hasError = false;
-              _errorMessage = null;
-              _isLoading = true;
-            });
-          }
-        },
-        onPageFinished: (String url) async {
-          debugPrint('Page finished loading: $url');
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-              _loadingProgress = 100;
-            });
-            _updateBackButtonState();
-          }
-        },
-        onWebResourceError: (WebResourceError error) {
-          debugPrint('WebView Error: ${error.description}');
-          if (mounted) {
-            setState(() {
-              _hasError = true;
-              _errorMessage = error.description;
-              _isLoading = false;
-            });
-          }
-        },
-        onNavigationRequest: _handleNavigationRequest,
-      ),
-    );
-
-    if (controller.platform is AndroidWebViewController) {
-      final androidController = controller.platform as AndroidWebViewController;
-      await androidController.setMediaPlaybackRequiresUserGesture(false);
-      await androidController.setGeolocationEnabled(false);
-      await androidController.setAllowFileAccess(false);
-    }
-
-    await controller.loadRequest(Uri.parse(_homeUrl));
-
-    setState(() {
-      _controller = controller;
-      _controllerInitialized = true;
-    });
-  }
-
-  NavigationDecision _handleNavigationRequest(NavigationRequest request) {
-    final uri = Uri.parse(request.url);
+    final uri = url;
 
     if (uri.host == _allowedDomain || uri.host == 'www.$_allowedDomain') {
-      return NavigationDecision.navigate;
+      return NavigationActionPolicy.ALLOW;
     }
 
     if (_isExternalUrl(uri)) {
-      _launchExternalUrl(request.url);
-      return NavigationDecision.prevent;
+      _launchExternalUrl(uri.toString());
+      return NavigationActionPolicy.CANCEL;
     }
 
-    debugPrint('Blocked navigation to: ${request.url}');
-    return NavigationDecision.prevent;
+    debugPrint('Blocked navigation to: $uri');
+    return NavigationActionPolicy.CANCEL;
   }
 
   bool _isExternalUrl(Uri uri) {
@@ -216,9 +151,11 @@ class _GoogleContentState extends State<_GoogleContent> with WidgetsBindingObser
 
   Future<void> _updateBackButtonState() async {
     try {
-      final canGoBack = await _controller.canGoBack();
-      if (mounted) {
-        setState(() => _canGoBack = canGoBack);
+      if (_webViewController != null) {
+        final canGoBack = await _webViewController!.canGoBack();
+        if (mounted) {
+          setState(() => _canGoBack = canGoBack);
+        }
       }
     } catch (e) {
       debugPrint('Error checking back navigation: $e');
@@ -237,12 +174,12 @@ class _GoogleContentState extends State<_GoogleContent> with WidgetsBindingObser
       _hasError = false;
       _errorMessage = null;
     });
-    await _controller.reload();
+    await _webViewController?.reload();
   }
 
   Future<bool> _handleBackPress() async {
     if (_canGoBack) {
-      await _controller.goBack();
+      await _webViewController?.goBack();
       await _updateBackButtonState();
       return false;
     }
@@ -262,9 +199,54 @@ class _GoogleContentState extends State<_GoogleContent> with WidgetsBindingObser
       },
       child: Stack(
         children: [
-          if (!_isConnected) OfflineScreen(onRetry: _checkConnectivityAndReload) else if (_hasError) ErrorScreen(errorMessage: _errorMessage, onRetry: _reloadWebView) else if (_controllerInitialized) WebViewWidget(controller: _controller) else const Center(child: CircularProgressIndicator()),
-
-          LoadingIndicator(progress: _loadingProgress.toDouble(), isLoading: _isLoading),
+          if (!_isConnected)
+            OfflineScreen(onRetry: _checkConnectivityAndReload)
+          else if (_hasError)
+            ErrorScreen(errorMessage: _errorMessage, onRetry: _reloadWebView)
+          else
+            InAppWebView(
+              initialUrlRequest: URLRequest(url: WebUri(_homeUrl)),
+              initialSettings: _settings,
+              onWebViewCreated: (controller) {
+                _webViewController = controller;
+              },
+              onLoadStart: (controller, url) {
+                debugPrint('Page started loading: $url');
+                if (mounted) {
+                  setState(() {
+                    _hasError = false;
+                    _errorMessage = null;
+                    _loadingProgress = 0;
+                  });
+                }
+              },
+              onLoadStop: (controller, url) async {
+                debugPrint('Page finished loading: $url');
+                if (mounted) {
+                  setState(() {
+                    _loadingProgress = 100;
+                  });
+                  _updateBackButtonState();
+                }
+              },
+              onReceivedError: (controller, request, error) {
+                debugPrint('WebView Error: ${error.description}');
+                // Only show error screen for main frame errors
+                if (request.isForMainFrame == true) {
+                  if (mounted) {
+                    setState(() {
+                      _hasError = true;
+                      _errorMessage = error.description;
+                    });
+                  }
+                }
+              },
+              onProgressChanged: (controller, progress) {
+                _debouncedProgressUpdate(progress);
+              },
+              shouldOverrideUrlLoading: _handleNavigationDecision,
+            ),
+          LoadingIndicator(progress: _loadingProgress.toDouble(), isLoading: _loadingProgress < 100),
         ],
       ),
     );
