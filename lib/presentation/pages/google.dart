@@ -1,8 +1,9 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'dart:io';
 
+import 'package:flutter/material.dart';
+
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:project_google/services/connectivity_service.dart';
 import 'package:project_google/presentation/widgets/offline_screen.dart';
 import 'package:project_google/presentation/widgets/error_screen.dart';
@@ -33,11 +34,10 @@ class _GoogleContent extends StatefulWidget {
 
 class _GoogleContentState extends State<_GoogleContent> with WidgetsBindingObserver {
   InAppWebViewController? _webViewController;
-  InAppWebViewSettings _settings = InAppWebViewSettings(isInspectable: true, mediaPlaybackRequiresUserGesture: false, allowsInlineMediaPlayback: true, iframeAllowFullscreen: true, userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+  InAppWebViewSettings _settings = InAppWebViewSettings(isInspectable: true, mediaPlaybackRequiresUserGesture: false, allowsInlineMediaPlayback: true, iframeAllowFullscreen: true, userAgent: Platform.isWindows ? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" : null);
 
   final ConnectivityService _connectivityService = ConnectivityService();
 
-  static const String _allowedDomain = 'google.com';
   static const String _homeUrl = 'https://www.google.com';
 
   bool _isConnected = true;
@@ -100,53 +100,7 @@ class _GoogleContentState extends State<_GoogleContent> with WidgetsBindingObser
   }
 
   Future<NavigationActionPolicy> _handleNavigationDecision(InAppWebViewController controller, NavigationAction navigationAction) async {
-    final url = navigationAction.request.url;
-    if (url == null) return NavigationActionPolicy.CANCEL;
-
-    final uri = url;
-
-    if (uri.host == _allowedDomain || uri.host == 'www.$_allowedDomain') {
-      return NavigationActionPolicy.ALLOW;
-    }
-
-    if (_isExternalUrl(uri)) {
-      _launchExternalUrl(uri.toString());
-      return NavigationActionPolicy.CANCEL;
-    }
-
-    debugPrint('Blocked navigation to: $uri');
-    return NavigationActionPolicy.CANCEL;
-  }
-
-  bool _isExternalUrl(Uri uri) {
-    final externalSchemes = ['tel:', 'mailto:', 'https:', 'http:'];
-
-    if (externalSchemes.contains(uri.scheme)) {
-      if (uri.scheme == 'tel:' || uri.scheme == 'mailto:') {
-        return true;
-      }
-
-      if (uri.host != _allowedDomain && uri.host != 'www.$_allowedDomain') {
-        final externalHosts = ['facebook.com', 'twitter.com', 'instagram.com', 'linkedin.com', 'youtube.com', 'whatsapp.com', 'telegram.org', 'paypal.com', 'stripe.com', 'google.com', 'maps.google.com', 'play.google.com', 'apps.apple.com'];
-
-        if (externalHosts.contains(uri.host) || uri.host.contains('facebook') || uri.host.contains('google') || uri.host.contains('whatsapp') || uri.host.contains('telegram')) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  Future<void> _launchExternalUrl(String url) async {
-    try {
-      final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (e) {
-      debugPrint('Error launching external URL: $e');
-    }
+    return NavigationActionPolicy.ALLOW;
   }
 
   Future<void> _updateBackButtonState() async {
@@ -244,8 +198,12 @@ class _GoogleContentState extends State<_GoogleContent> with WidgetsBindingObser
               onProgressChanged: (controller, progress) {
                 _debouncedProgressUpdate(progress);
               },
+              onReceivedServerTrustAuthRequest: (controller, challenge) async {
+                return ServerTrustAuthResponse(action: ServerTrustAuthResponseAction.PROCEED);
+              },
               shouldOverrideUrlLoading: _handleNavigationDecision,
             ),
+
           LoadingIndicator(progress: _loadingProgress.toDouble(), isLoading: _loadingProgress < 100),
         ],
       ),
